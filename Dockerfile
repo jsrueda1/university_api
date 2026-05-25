@@ -12,8 +12,12 @@ COPY . /var/www/html/
 # Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# Railway usa la variable PORT, configurar Apache para usarla
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/' /etc/apache2/ports.conf
-RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${PORT:-80}>/' /etc/apache2/sites-enabled/000-default.conf
+# Script de inicio que configura el puerto dinámicamente
+RUN echo '#!/bin/bash\n\
+sed -i "s/Listen 80/Listen ${PORT:-80}/g" /etc/apache2/ports.conf\n\
+sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${PORT:-80}>/g" /etc/apache2/sites-enabled/000-default.conf\n\
+apache2-foreground' > /start.sh && chmod +x /start.sh
 
 EXPOSE 80
+
+CMD ["/bin/bash", "/start.sh"]
