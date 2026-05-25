@@ -2,25 +2,20 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "123456789", "university", "3306");
+require_once 'conexion.php';
 
-$salon_id    = $_GET['salon_id'] ?? '';
-$fecha       = $_GET['fecha'] ?? '';
+$salon_id    = $_GET['salon_id']    ?? '';
+$fecha       = $_GET['fecha']       ?? '';
 $hora_inicio = $_GET['hora_inicio'] ?? '';
-$hora_fin    = $_GET['hora_fin'] ?? '';
+$hora_fin    = $_GET['hora_fin']    ?? '';
 
-$sql = "SELECT COUNT(*) as total FROM reservas 
-        WHERE salon_id = '$salon_id' 
-        AND fecha = '$fecha' 
-        AND estado = 'activa'
-        AND (
-            (hora_inicio < '$hora_fin' AND hora_fin > '$hora_inicio')
-        )";
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM reservas 
+    WHERE salon_id = ? AND fecha = ? AND estado = 'activa'
+    AND (hora_inicio < ? AND hora_fin > ?)");
+$stmt->bind_param("ssss", $salon_id, $fecha, $hora_fin, $hora_inicio);
+$stmt->execute();
+$row = $stmt->get_result()->fetch_assoc();
 
-$result = $conn->query($sql);
-$row = $result->fetch_assoc();
-
-echo json_encode([
-    "disponible" => $row['total'] == 0
-]);
+echo json_encode(["disponible" => $row['total'] == 0]);
+$conn->close();
 ?>

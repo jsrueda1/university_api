@@ -4,31 +4,19 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { http_response_code(200); exit(); }
 
-// ── CONEXIÓN ──────────────────────────────────────────────
-$conn = new mysqli("localhost", "root", "123456789", "university");
-$conn->set_charset("utf8mb4");
+require_once 'conexion.php';
 
-if ($conn->connect_error) {
-    echo json_encode(["success" => false, "mensaje" => "Error de conexión"]);
-    exit();
-}
-
-// ── DATOS DEL REQUEST ─────────────────────────────────────
 $data     = json_decode(file_get_contents("php://input"));
-$codigo   = $data->usuario   ?? '';
-$password = $data->password  ?? '';
+$codigo   = $data->usuario  ?? '';
+$password = $data->password ?? '';
 
 if (empty($codigo) || empty($password)) {
     echo json_encode(["success" => false, "mensaje" => "Campos requeridos"]);
     exit();
 }
 
-// ── CONSULTA SEGURA CON MD5 ───────────────────────────────
 $stmt = $conn->prepare(
     "SELECT id, codigo, nombre, apellido, programa 
      FROM estudiantes 
@@ -40,20 +28,17 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
-    $estudiante = $result->fetch_assoc();
+    $e = $result->fetch_assoc();
     echo json_encode([
         "success"  => true,
         "mensaje"  => "Login exitoso",
-        "codigo"   => $estudiante['codigo'],
-        "nombre"   => $estudiante['nombre'],
-        "apellido" => $estudiante['apellido'],
-        "programa" => $estudiante['programa'],
+        "codigo"   => $e['codigo'],
+        "nombre"   => $e['nombre'],
+        "apellido" => $e['apellido'],
+        "programa" => $e['programa'],
     ]);
 } else {
-    echo json_encode([
-        "success" => false,
-        "mensaje" => "Código o contraseña incorrectos"
-    ]);
+    echo json_encode(["success" => false, "mensaje" => "Código o contraseña incorrectos"]);
 }
 
 $stmt->close();

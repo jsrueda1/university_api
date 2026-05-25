@@ -1,26 +1,24 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
+require_once 'conexion.php';
+
+$usuario = $_GET['usuario'] ?? '';
+
+$stmt = $conn->prepare("SELECT r.*, s.nombre as salon_nombre 
+    FROM reservas r JOIN salones s ON r.salon_id = s.id
+    WHERE r.usuario = ?
+    ORDER BY r.fecha DESC, r.hora_inicio DESC");
+$stmt->bind_param("s", $usuario);
+$stmt->execute();
+$result   = $stmt->get_result();
+$reservas = [];
+
+while ($row = $result->fetch_assoc()) {
+    $reservas[] = $row;
 }
 
-$conn = new mysqli("localhost", "root", "123456789", "university", "3306");
-
-$data = json_decode(file_get_contents("php://input"));
-$id      = $data->id ?? 0;
-$usuario = $data->usuario ?? '';
-
-$sql = "UPDATE reservas SET estado = 'cancelada' 
-        WHERE id = $id AND usuario = '$usuario'";
-
-$ok = $conn->query($sql);
-
-echo json_encode([
-    "success" => $ok && $conn->affected_rows > 0
-]);
+echo json_encode($reservas);
+$conn->close();
 ?>
