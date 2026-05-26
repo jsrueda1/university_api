@@ -1,4 +1,7 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -38,9 +41,6 @@ switch ($method) {
         echo json_encode(['status' => 'error', 'message' => 'Método no permitido']);
 }
 
-// =============================================================================
-// OBTENER HORARIO DEL ESTUDIANTE agrupado por día
-// =============================================================================
 function obtenerHorario($conn, $usuario_id) {
     $sql = "
         SELECT
@@ -50,8 +50,8 @@ function obtenerHorario($conn, $usuario_id) {
             h.dia_semana,
             h.hora_inicio,
             h.hora_fin,
-            s.nombre    AS salon_nombre,
-            s.ubicacion AS salon_ubicacion
+            s.nombre AS salon_nombre,
+            s.piso   AS salon_ubicacion
         FROM horario_estudiante he
         JOIN horarios h ON he.clase_id = h.id
         LEFT JOIN salones s ON h.salon_id = s.id
@@ -95,9 +95,6 @@ function obtenerHorario($conn, $usuario_id) {
     ]);
 }
 
-// =============================================================================
-// INSCRIBIR ESTUDIANTE A UNA CLASE
-// =============================================================================
 function inscribirHorario($conn, $data) {
     $usuario_id = (int)($data['usuario_id'] ?? 0);
     $clase_id   = (int)($data['clase_id']   ?? 0);
@@ -108,7 +105,6 @@ function inscribirHorario($conn, $data) {
         return;
     }
 
-    // Verificar que no esté ya inscrito
     $check = $conn->prepare("SELECT 1 FROM horario_estudiante WHERE usuario_id = ? AND clase_id = ?");
     $check->bind_param('ii', $usuario_id, $clase_id);
     $check->execute();
