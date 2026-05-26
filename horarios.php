@@ -19,7 +19,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         if (isset($_GET['usuario_id'])) {
-            obtenerHorario($conn, (int)$_GET['usuario_id']);
+            obtenerHorario($conn, $_GET['usuario_id']);
         } else {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'usuario_id requerido']);
@@ -41,6 +41,9 @@ switch ($method) {
         echo json_encode(['status' => 'error', 'message' => 'Método no permitido']);
 }
 
+// =============================================================================
+// OBTENER HORARIO DEL ESTUDIANTE agrupado por día
+// =============================================================================
 function obtenerHorario($conn, $usuario_id) {
     $sql = "
         SELECT
@@ -57,19 +60,30 @@ function obtenerHorario($conn, $usuario_id) {
         LEFT JOIN salones s ON h.salon_id = s.id
         WHERE he.usuario_id = ?
         ORDER BY
-            FIELD(h.dia_semana,
-                'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'),
+            h.dia_semana,
             h.hora_inicio
     ";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $usuario_id);
+    $stmt->bind_param('s', $usuario_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
+    $diasNombre = [
+        1 => 'Lunes',
+        2 => 'Martes',
+        3 => 'Miércoles',
+        4 => 'Jueves',
+        5 => 'Viernes',
+        6 => 'Sábado',
+        7 => 'Domingo',
+    ];
+
     $agrupado = [];
     while ($row = $result->fetch_assoc()) {
-        $dia = $row['dia_semana'];
+        $diaNum = (int)$row['dia_semana'];
+        $dia    = $diasNombre[$diaNum] ?? $row['dia_semana'];
+
         if (!isset($agrupado[$dia])) {
             $agrupado[$dia] = [];
         }
@@ -77,7 +91,7 @@ function obtenerHorario($conn, $usuario_id) {
             'id'              => (int)$row['id'],
             'materia'         => $row['materia'],
             'docente'         => $row['docente'],
-            'dia_semana'      => $row['dia_semana'],
+            'dia_semana'      => $dia,
             'hora_inicio'     => $row['hora_inicio'],
             'hora_fin'        => $row['hora_fin'],
             'salon_nombre'    => $row['salon_nombre']    ?? 'Sin asignar',
@@ -95,9 +109,12 @@ function obtenerHorario($conn, $usuario_id) {
     ]);
 }
 
+// =============================================================================
+// INSCRIBIR ESTUDIANTE A UNA CLASE
+// =============================================================================
 function inscribirHorario($conn, $data) {
-    $usuario_id = (int)($data['usuario_id'] ?? 0);
-    $clase_id   = (int)($data['clase_id']   ?? 0);
+    $usuario_id = $data['usuario_id'] ?? '';
+    $clase_id   = (int)($data['clase_id'] ?? 0);
 
     if (!$usuario_id || !$clase_id) {
         http_response_code(400);
@@ -106,7 +123,7 @@ function inscribirHorario($conn, $data) {
     }
 
     $check = $conn->prepare("SELECT 1 FROM horario_estudiante WHERE usuario_id = ? AND clase_id = ?");
-    $check->bind_param('ii', $usuario_id, $clase_id);
+    $check->bind_param('si', $usuario_id, $clase_id);
     $check->execute();
     $check->store_result();
 
@@ -118,7 +135,7 @@ function inscribirHorario($conn, $data) {
     $check->close();
 
     $stmt = $conn->prepare("INSERT INTO horario_estudiante (usuario_id, clase_id) VALUES (?, ?)");
-    $stmt->bind_param('ii', $usuario_id, $clase_id);
+    $stmt->bind_param('si', $usuario_id, $clase_id);
     $ok = $stmt->execute();
     $stmt->close();
     $conn->close();
