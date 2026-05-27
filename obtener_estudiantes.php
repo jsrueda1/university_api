@@ -33,17 +33,20 @@ if (!empty($row['foto'])) {
 }
 
 echo json_encode([
-    'id'          => $row['id'],
-    'codigo'      => $row['codigo'],
-    'nombre'      => $row['nombre'],
-    'apellido'    => $row['apellido'],
-    'programa'    => $row['programa'],
-    'facultad'    => $row['facultad'],
-    'semestre'    => $row['semestre'],
-    'tipo_sangre' => $row['tipo_sangre'],
-    'eps'         => $row['eps'],
-    'vigencia'    => $row['vigencia'],
-    'foto'        => $foto_url,
+    'id'                   => $row['id'],
+    'codigo'               => $row['codigo'],
+    'nombre'               => $row['nombre'],
+    'apellido'             => $row['apellido'],
+    'programa'             => $row['programa'],
+    'facultad'             => $row['facultad'],
+    'semestre'             => $row['semestre'],
+    'tipo_sangre'          => $row['tipo_sangre'],
+    'eps'                  => $row['eps'],
+    'alergias'             => $row['alergias']             ?? '',
+    'contacto_emergencia'  => $row['contacto_emergencia']  ?? '',
+    'telefono_emergencia'  => $row['telefono_emergencia']  ?? '',
+    'vigencia'             => $row['vigencia'],
+    'foto'                 => $foto_url,
 ]);
 
 $stmt->close();
