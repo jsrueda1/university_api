@@ -25,12 +25,6 @@ if ($result->num_rows === 0) {
 
 $row = $result->fetch_assoc();
 
-$foto_url = null;
-if (!empty($row['foto'])) {
-    $protocolo = (!empty($_SERVER['HTTPS'])) ? 'https' : 'http';
-    $host_url  = $_SERVER['HTTP_HOST'];
-    $foto_url  = "$protocolo://$host_url/uploads/fotos_estudiantes/" . $row['foto'];
-}
 
 echo json_encode([
     'id'                   => $row['id'],
@@ -42,12 +36,12 @@ echo json_encode([
     'semestre'             => $row['semestre'],
     'tipo_sangre'          => $row['tipo_sangre'],
     'eps'                  => $row['eps'],
-    'alergias'             => $row['alergias']             ?? '',
-    'contacto_emergencia'  => $row['contacto_emergencia']  ?? '',
-    'telefono_emergencia'  => $row['telefono_emergencia']  ?? '',
+    'alergias'             => $row['alergias']            ?? '',
+    'contacto_emergencia'  => $row['contacto_emergencia'] ?? '',
+    'telefono_emergencia'  => $row['telefono_emergencia'] ?? '',
     'vigencia'             => $row['vigencia'],
-    'foto'                 => $foto_url,
-]);
+    'foto'                 => $row['foto']                ?? null,
+], JSON_UNESCAPED_UNICODE); 
 
 $stmt->close();
 $conn->close();
