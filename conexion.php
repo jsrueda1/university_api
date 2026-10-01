@@ -1,21 +1,20 @@
 <?php
+// Los datos de conexión vienen de variables de entorno (configuradas en Railway).
+// Si no existen, usa valores para XAMPP local.
+$host     = getenv('DB_HOST')     ?: '127.0.0.1';
+$port     = (int)(getenv('DB_PORT') ?: 3306);
+$user     = getenv('DB_USER')     ?: 'root';
+$password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
+$database = getenv('DB_NAME')     ?: 'university';
 
-$host     = 'tokaido.proxy.rlwy.net';
-$port     = 39816;
-$user     = 'root';
-$password = 'bdIAkuAwvIbcPKPTxoZPsKzsfAHMoIQG';
-$database = 'railway';
-
-$conn = new mysqli($host, $user, $password, $database, $port);
-
-if ($conn->connect_error) {
+try {
+    $conn = new mysqli($host, $user, $password, $database, $port);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Error de conexión: ' . $conn->connect_error
-    ]);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Error de conexión: ' . $e->getMessage()]);
     exit;
 }
 
 $conn->set_charset('utf8mb4');
-
 ?>
